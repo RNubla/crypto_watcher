@@ -1,8 +1,8 @@
 use clap::{App, Arg};
-use reqwest::Response;
-use scraper::{Html, Selector};
-use serde_json::json;
 
+use crypto_watch::crypto::Crypto;
+// mod crypto;
+// use crypto::Crypto;
 fn main() {
     let matches = App::new("Crypto Watcher")
         .version("0.1.0")
@@ -22,94 +22,8 @@ fn main() {
             "https://coinmarketcap.com/currencies/{}/",
             matches.value_of("currency").unwrap()
         );
-        scrape(&url).unwrap();
+        Crypto::new(url).scrape().unwrap();
     }
-}
-
-// fn scrape_currency_name(body_response: &String) -> String {
-fn scrape_currency_name(body_response: &String) -> Vec<String> {
-    // let parsed_body_to_html = Html::parse_document(&body_response.text().await?);
-    let parsed_body_to_html = Html::parse_document(body_response);
-    let currency_container_selector =
-        Selector::parse(r#"div[class="sc-16r8icm-0 gpRPnR nameHeader"]"#).unwrap();
-    let name_selector = Selector::parse(r#"h2[class="sc-1q9q90x-0 jCInrl h1"]"#).unwrap();
-
-    let currency_content = parsed_body_to_html
-        .select(&currency_container_selector)
-        .next()
-        .unwrap();
-    // for curren
-    // println!("{:?}", currency_content);
-    // let mut currency_name_str = String::new();
-    let mut _currency = Vec::new();
-    for currency_name in currency_content.select(&name_selector) {
-        currency_name
-            .text()
-            .collect::<Vec<_>>()
-            .join(" ")
-            .split_whitespace()
-            .for_each(|x| {
-                _currency.push(x.to_string());
-            });
-    }
-    _currency
-}
-
-// fn scrape_currency_current_price(body_response: &String) -> String {
-fn scrape_currency_current_price(body_response: &String) -> Vec<String> {
-    let parsed_body_to_html = Html::parse_document(body_response);
-    // let parsed_body_to_html = Html::parse_document(&body_response.text().await?);
-    let price_container_selector =
-        Selector::parse(r#"div[class="sc-16r8icm-0 kjciSH priceTitle"]"#).unwrap();
-    let price_selector = Selector::parse("span").unwrap();
-
-    // println!("{:?}", price_container_selector);
-
-    let price_content = parsed_body_to_html
-        .select(&price_container_selector)
-        .next()
-        .unwrap();
-    // println!("{:?}", currency_name_content);
-    let mut _price = Vec::new();
-    for price in price_content.select(&price_selector) {
-        price
-            .text()
-            .collect::<Vec<_>>()
-            .join(" ")
-            .split_whitespace()
-            .for_each(|x| {
-                _price.push(x.to_string());
-            });
-    }
-    _price
-}
-
-#[tokio::main]
-async fn scrape(url: &str) -> Result<(), reqwest::Error> {
-    // This fixes the issue of error code : 1020 due to website detecting bots for scrapping
-    static APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"),);
-    let client = reqwest::Client::builder()
-        .user_agent(APP_USER_AGENT)
-        .build()?;
-
-    let response = client.get(url);
-    let body_response = response.send().await?;
-
-    let html = body_response.text().await?;
-    // println!("{}", html);
-    // println!("{:?}", scrape_currency_name(&html)[0]);
-    // println!("{:?}", scrape_currency_current_price(&html));
-
-    let crypto = json!({
-        "name": scrape_currency_name(&html)[0],
-        "symbol": scrape_currency_name(&html)[1],
-        "current_price": scrape_currency_current_price(&html)[0],
-    });
-
-    // pretty print the json
-    println!("{}", serde_json::to_string_pretty(&crypto).unwrap());
-
-    Ok(())
 }
 
 // TODO: Instead of using the full name of the crypto, use the symbol
