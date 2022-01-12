@@ -11,7 +11,7 @@ fn main() {
         .arg(
             Arg::new("currency")
                 .short('c')
-                .long("currentcy")
+                .long("currency")
                 .takes_value(true)
                 .help("Show current price for a currency that you specify"),
         )
