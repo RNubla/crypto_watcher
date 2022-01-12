@@ -25,13 +25,13 @@ fn main() {
     }
 }
 
-// async fn scrape_currency_name(body_response: Response) -> Result<(), reqwest::Error> {
-fn scrape_currency_name(body_response: &String) -> String {
+// fn scrape_currency_name(body_response: &String) -> String {
+fn scrape_currency_name(body_response: &String) -> Vec<String> {
     // let parsed_body_to_html = Html::parse_document(&body_response.text().await?);
     let parsed_body_to_html = Html::parse_document(body_response);
     let currency_container_selector =
         Selector::parse(r#"div[class="sc-16r8icm-0 gpRPnR nameHeader"]"#).unwrap();
-    let currency_selector = Selector::parse("h2").unwrap();
+    let name_selector = Selector::parse(r#"h2[class="sc-1q9q90x-0 jCInrl h1"]"#).unwrap();
 
     let currency_content = parsed_body_to_html
         .select(&currency_container_selector)
@@ -41,32 +41,28 @@ fn scrape_currency_name(body_response: &String) -> String {
     // println!("{:?}", currency_content);
     // let mut currency_name_str = String::new();
     let mut _currency = Vec::new();
-    for currency_name in currency_content.select(&currency_selector) {
-        // currency_name_str.push_str(currency_name.text().collect::<Vec<_>>().join(""));
-        _currency.push(currency_name.text().collect::<Vec<_>>().join(" "));
-        // _currency.push(currency_name.text());
+    for currency_name in currency_content.select(&name_selector) {
+        currency_name
+            .text()
+            .collect::<Vec<_>>()
+            .join(" ")
+            .split_whitespace()
+            .for_each(|x| {
+                _currency.push(x.to_string());
+            });
     }
-    _currency.join(" ")
-    // println!("{:?}", _currency);
-    // let t = _currency[0];
-    // for currency_name in currency_content.select(&currency_selector) {
-    //     println!(
-    //         "{}",
-    //         format!("{}", currency_name.text().collect::<Vec<_>>().join(" "))
-    //     );
-    // }
-    // Ok(())
+    _currency
 }
 
-// async fn scrape_currency_current_price(body_response: Response) -> Result<(), reqwest::Error> {
-// async fn scrape_currency_current_price(body_response: String) -> Result<(), reqwest::Error> {
-fn scrape_currency_current_price(body_response: &String) -> String {
+// fn scrape_currency_current_price(body_response: &String) -> String {
+fn scrape_currency_current_price(body_response: &String) -> Vec<String> {
     let parsed_body_to_html = Html::parse_document(body_response);
     // let parsed_body_to_html = Html::parse_document(&body_response.text().await?);
-    let price_container_selector = Selector::parse(r#"div[class="priceValue"]"#).unwrap();
+    let price_container_selector =
+        Selector::parse(r#"div[class="sc-16r8icm-0 kjciSH priceTitle"]"#).unwrap();
     let price_selector = Selector::parse("span").unwrap();
 
-    println!("{:?}", price_container_selector);
+    // println!("{:?}", price_container_selector);
 
     let price_content = parsed_body_to_html
         .select(&price_container_selector)
@@ -75,14 +71,22 @@ fn scrape_currency_current_price(body_response: &String) -> String {
     // println!("{:?}", currency_name_content);
     let mut _price = Vec::new();
     for price in price_content.select(&price_selector) {
-        _price.push(price.text().collect::<Vec<_>>().join(" "));
+        price
+            .text()
+            .collect::<Vec<_>>()
+            .join(" ")
+            .split_whitespace()
+            .for_each(|x| {
+                _price.push(x.to_string());
+            });
+        // _price.push(price.text().collect::<Vec<_>>().join(" "));
         // String::from("{}", price.text().collect::<Vec<_>>().join(" "));
         // println!(
         //     "{}",
         //     format!("{}", price.text().collect::<Vec<_>>().join(" "))
         // );
     }
-    _price.join(" ")
+    _price
 }
 
 #[tokio::main]
@@ -98,8 +102,8 @@ async fn scrape(url: &str) -> Result<(), reqwest::Error> {
 
     let html = body_response.text().await?;
     // println!("{}", html);
-    println!("{}", scrape_currency_name(&html));
-    println!("{}", scrape_currency_current_price(&html));
+    println!("{:?}", scrape_currency_name(&html));
+    println!("{:?}", scrape_currency_current_price(&html));
 
     // scrape_currency_current_price(body_response).await?;
 
