@@ -15,6 +15,7 @@ impl Crypto {
     }
     #[tokio::main]
     pub async fn scrape(&self) -> Result<(), reqwest::Error> {
+        // This will fix the issue of the request being blocked by the server and returning an error code : 1020
         static APP_USER_AGENT: &str =
             concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"),);
         let client = reqwest::Client::builder()
