@@ -1,6 +1,7 @@
 use clap::{App, Arg};
 use reqwest::Response;
 use scraper::{Html, Selector};
+use serde_json::json;
 
 fn main() {
     let matches = App::new("Crypto Watcher")
@@ -79,12 +80,6 @@ fn scrape_currency_current_price(body_response: &String) -> Vec<String> {
             .for_each(|x| {
                 _price.push(x.to_string());
             });
-        // _price.push(price.text().collect::<Vec<_>>().join(" "));
-        // String::from("{}", price.text().collect::<Vec<_>>().join(" "));
-        // println!(
-        //     "{}",
-        //     format!("{}", price.text().collect::<Vec<_>>().join(" "))
-        // );
     }
     _price
 }
@@ -102,34 +97,19 @@ async fn scrape(url: &str) -> Result<(), reqwest::Error> {
 
     let html = body_response.text().await?;
     // println!("{}", html);
-    println!("{:?}", scrape_currency_name(&html));
-    println!("{:?}", scrape_currency_current_price(&html));
+    // println!("{:?}", scrape_currency_name(&html)[0]);
+    // println!("{:?}", scrape_currency_current_price(&html));
 
-    // scrape_currency_current_price(body_response).await?;
+    let crypto = json!({
+        "name": scrape_currency_name(&html)[0],
+        "symbol": scrape_currency_name(&html)[1],
+        "current_price": scrape_currency_current_price(&html)[0],
+    });
 
-    // println!("{:?}", body_response.text().await?);
-    // scrape_currency_current_price(html).await?;
-    // scrape_currency_name(body_response).await?;
-    // scrape_currency_name(&html);
-    // println!("{:?}", scrape_currency_name(&html));
-    // scrape_currency_current_price(body_response).await?;
-
-    /* let parsed_body_to_html = Html::parse_document(&body_response.text().await?);
-    let currency_selector =
-        Selector::parse(r#"div[class="sc-16r8icm-0 gpRPnR nameHeader"]"#).unwrap();
-    let currency_name_selector = Selector::parse("h2").unwrap();
-
-    let currency_name_content = parsed_body_to_html
-        .select(&currency_selector)
-        .next()
-        .unwrap();
-    // println!("{:?}", currency_name_content);
-    for currency_name in currency_name_content.select(&currency_name_selector) {
-        println!(
-            "{}",
-            format!("{}", currency_name.text().collect::<Vec<_>>().join(" "))
-        );
-    } */
+    // pretty print the json
+    println!("{}", serde_json::to_string_pretty(&crypto).unwrap());
 
     Ok(())
 }
+
+// TODO: Instead of using the full name of the crypto, use the symbol
